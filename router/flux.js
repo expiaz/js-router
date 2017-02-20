@@ -3,7 +3,7 @@
     exports.Flux = function () {
         this.state = {};
         this.store = [];
-        this.lastModif = {};
+        this.last = {};
     }
 
     exports.Flux.prototype.init = function (initialState) {
@@ -78,11 +78,11 @@
                         (a[k] instanceof RegExp && b[k] instanceof RegExp) ||
                         (a[k] instanceof String && b[k] instanceof String) ||
                         (a[k] instanceof Number && b[k] instanceof Number)) {
-                        if(a[k].toString() != a[k].toString())
+                        if(a[k].toString() != b[k].toString())
                             return true;
                     }
-                    if(a[k] instanceof Array && a[k] instanceof Array){
-                        if(a[k].length != a[k].length)
+                    if(a[k] instanceof Array && b[k] instanceof Array){
+                        if(a[k].length != b[k].length)
                             return true;
                         console.log('passed 5');
                         for(var i = 0; i < a[k].length; i++)
@@ -112,12 +112,16 @@
 
     exports.Flux.prototype.setState = function (state) {
 
-        //TODO CHECK FOR OVERWRITE BF STORE IT : IF NOT DON'T STORE IF STATE IS THE SAME DON'T STORE
         if(typeof state != "object" || Array.isArray(state)) return;
 
-        if(this.diff(this.state,state)){
+        if(this.diff(this.last,state)){
             this.store.push(this.utils.assign_(this.state));
         }
+        else if(this.diff(this.state,state)){
+            this.store.push(this.utils.assign_(this.state));
+        }
+
+        this.last = state;
 
         for(var prop in state) {
             if (typeof state[prop] == "object") {
@@ -145,12 +149,5 @@
             }, this);
         }
     }
-
-    /*function setState(bf,af) {
-        if(typeof af != "object" || Array.isArray(af)) return;
-        for(var prop in af)
-            bf[prop] = af[prop];
-        return af;
-    }*/
 
 })(typeof window === undefined ? module.exports : window);
