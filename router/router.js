@@ -17,15 +17,23 @@
     }
 
     exports.Router.prototype.init = function () {
-        var self = this;
-        Array.prototype.slice.call(document.getElementsByTagName('a')).forEach(function (link) {
-            link.addEventListener('click',function (e) {
-                e.preventDefault();
-                self.navigate(link.pathname);
-            });
-        });
+        this.parseTags();
         this.listen();
         this.navigate(decodeURI(window.location.pathname));
+    }
+
+    exports.Router.prototype.parseTags = function () {
+        var self = this;
+        Array.prototype.slice.call(document.getElementsByTagName('a')).forEach(function (link) {
+            if(!(link.className.match(/handle/))){
+                link.className = link.className.length ? link.className + ' handle' : 'handle'
+                link.addEventListener('click',function (e) {
+                    e.preventDefault();
+                    console.log('link cliked')
+                    self.navigate(link.pathname);
+                });
+            }
+        });
     }
 
     exports.Router.prototype.listen = function(){
@@ -80,7 +88,7 @@
     }
 
     exports.Router.prototype.on = function(route,vars,handler){
-        if(typeof route == "function" && arguments.length == 1){
+        if(typeof route == "function"){
             this.routes.stack.push({
                 name: 'base',
                 route: /\//,
@@ -125,10 +133,14 @@
     };
 
     exports.Router.prototype.navigate = function(route) {
+        console.log('navigate');
         this.applyMiddleware(route);
     }
 
     exports.Router.prototype.applyMiddleware = function (route,index) {
+
+        console.log('applyMiddleware')
+
         var path = route || this.getLocation(),
             match;
 
@@ -157,6 +169,8 @@
 
     exports.Router.prototype.applyRoute = function (route) {
 
+        console.log('applyRoute')
+
         var path = route || this.getLocation(),
             match;
 
@@ -167,12 +181,17 @@
                     params = {};
                 for (var j = 0; j < args.length; j++)
                     params[this.routes.stack[i].vars[j]] = args[j];
-                this.history.add({
-                    route: this.routes.stack[i].name,
-                    url: match.input,
-                    params: params
-                });
-                window.history.pushState({location: path}, '', this.root + path + window.location.search + window.location.hash);
+                if(this.history.now().url != match.input){
+                    this.history.add({
+                        route: this.routes.stack[i].name,
+                        url: match.input,
+                        params: params
+                    });
+                    window.history.pushState({location: path}, '', this.root + path + window.location.search + window.location.hash);
+                }
+                else{
+                    window.history.replaceState({location: path}, '', this.root + path + window.location.search + window.location.hash);
+                }
                 this.emit(this.routes.stack[i].route);
                 return;
             }
@@ -181,6 +200,7 @@
     }
 
     exports.Router.prototype.emit = function(route){
+        console.log('emit')
         for(var i = 0; i < this.routes.stack.length; i++)
             if(this.routes.stack[i].route == route)
                 this.routes.stack[i].handler.call({}, this.history.now(), this.history.last());

@@ -9,11 +9,11 @@
     };
 
     exports.Historik.prototype.now = function () {
-        return this.history[this.history.length - 1];
+        return this.history[this.history.length - 1] || {};
     };
 
     exports.Historik.prototype.last = function () {
-        return this.history[this.history.length - 2];
+        return this.history[this.history.length - 2] || {};
     };
 
 })(typeof window === undefined ? module.exports : window);

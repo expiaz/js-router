@@ -60,7 +60,7 @@
     }
 
     Dictionnary.prototype.duplicate = function (key) {
-        var ret = this._values.slice(this._keys.indexOf(key) || 0,1)[0];
+        var ret = this._values.slice(this._keys.indexOf(key), this._keys.indexOf(key) + 1)[0];
         if(typeof ret == "object"){
             if(Array.isArray(ret)){
                 return this.utils.map_(ret);
@@ -71,8 +71,6 @@
         }
         return ret;
     }
-
-
 
     Dictionnary.prototype.utils = {
         assign_: function (obj) {
@@ -125,6 +123,7 @@
 
 
 
+
     /**
      * @class precompiler
      */
@@ -151,7 +150,7 @@
      * replace {{>*}} tags by their content
      */
     precompiler.prototype.makeInjections = function(){
-        var reg = /{{>(\w+)}}/g,
+        var reg = /{{>(\w+)}}/,
             match = [];
 
         while(match = reg.exec(this._tpl)){
@@ -159,9 +158,11 @@
                 t = match[1].split('.');
             for(var i =0; i<t.length; i++)
                 v = v[t[i]];
-            this._tpl.replace(match[0],v == undefined ? fs.readFileSync('templates/'+match+'.chino') : v);
+            this._tpl.replace(match[0],v ? v : '');
         }
     };
+
+
 
 
     /**
@@ -175,10 +176,6 @@
         };
         this._tpl;
     };
-
-
-
-
 
     /**
      * launch parsing
@@ -235,7 +232,6 @@
         this.tags = [raw.tag];
         this.indexs = [raw.index];
     }
-
 
     /**
      * @class TextNode
@@ -351,7 +347,7 @@
      */
     parser.prototype.getExpressionTree = function(){
         this._stack.push(this.getNode(null,'root'));
-        var match, current_node, opening_node,
+        var match, current_node,
             reg = /<%(\w+) *(?:{{(\W)?([^}]+)}})? *(?:(\w+) *{{(\W)?(\w+)}})?%>/g;
 
         while(match = reg.exec(this._tpl)){
@@ -396,7 +392,6 @@
         this._nodeTree = nodeTree;
         return this.applyContext(this._nodeTree);
     };
-
 
     /**
      * browse contexts to find the value of varName
@@ -553,9 +548,11 @@
         if(tpl == '\r\n' || tpl == '\n\r') return '';
 
         var match = [],
-            reg = /{{(?:(\W)?([^{]+))}}/g;
+            reg = /{{(\W)?([^{]+)}}/g,
+            ret = tpl;
 
         while(match = reg.exec(tpl)){
+
             var symbol = match[1],
                 m = match[2],
                 ctx;
@@ -575,11 +572,12 @@
             }
             else ctx = this.getContext(m);
 
-            tpl = tpl.replace(match[0],ctx !== undefined && typeof ctx !== "object" ? ctx : '');
+            ret = ret.replace(match[0],ctx !== undefined && typeof ctx !== "object" ? ctx : '');
         }
 
-        return tpl;
+        return ret;
     };
+
 
 
 
@@ -620,11 +618,14 @@
         return ret;
     }
 
-
+    /**
+     *
+     * @param text
+     * @returns {tpl|void|XML|string}
+     */
     renderEngine.prototype.trimText = function(text){
         return text.replace(/^[\r\n]+|[\r\n]+$/g,'');
     }
-
 
 
 
@@ -652,12 +653,12 @@
             matches = [],
             termReg = /<%(\w+) *(?:{{(\W)?([^}]+)}})? *(?:(\w+) *{{(\W)?(\w+)}})?%>/gi;
 
-        while (matches = termReg.exec(tpl))
+        while (matches = termReg.exec(tpl)){
             stack.length?(matches[1].match(/end/i)?(stack[stack.length-1]==matches[1].replace('end','')?stack.pop():null):stack.push(matches[1])):stack.push(matches[1]);
+        }
 
         return stack.length == 0;
     }
-
 
     /**
      * register a template on cache
@@ -673,13 +674,13 @@
         this._cached.add(name,tpl);
 
         if(!this.evaluate(this._cached.get(name)))
+            throw new Error("Fail eval");
 
-
-            if(vars && typeof vars == "object"){
-                this._cached.set(name,this.engine.precompiler.precompile(this._cached.get(name),vars));
-                if(!this.evaluate(this._cached.get(name)))
-                    throw new Error("Fail precompliation eval");
-            }
+        if(vars && typeof vars == "object"){
+            this._cached.set(name,this.engine.precompiler.precompile(this._cached.get(name),vars));
+            if(!this.evaluate(this._cached.get(name)))
+                throw new Error("Fail precompliation eval");
+        }
 
         this._cached.set(name,this.engine.parser.parse(this._cached.get(name)));
 

@@ -1,11 +1,12 @@
 (function (exports) {
 
-    exports.Dictionnary = function () {
+
+    var Dictionnary = function () {
         this._keys = [];
         this._values = [];
     }
 
-    exports.Dictionnary.prototype.add = function (key,value) {
+    Dictionnary.prototype.add = function (key,value) {
         if(typeof key == "object"){
             for(var k in key){
                 if(typeof k == "object") {
@@ -31,7 +32,7 @@
         }
     }
 
-    exports.Dictionnary.prototype.set = function (key,value) {
+    Dictionnary.prototype.set = function (key,value) {
         if(typeof key == "object"){
             for(var k in key){
                 if(typeof k == "object") {
@@ -55,12 +56,12 @@
         }
     }
 
-    exports.Dictionnary.prototype.get = function (key) {
+    Dictionnary.prototype.get = function (key) {
         return this._values[this._keys.indexOf(key)] || -1;
     }
 
-    exports.Dictionnary.prototype.duplicate = function (key) {
-        var ret = this._values.slice(this._keys.indexOf(key) || 0,1)[0];
+    Dictionnary.prototype.duplicate = function (key) {
+        var ret = this._values.slice(this._keys.indexOf(key), this._keys.indexOf(key) + 1)[0];
         if(typeof ret == "object"){
             if(Array.isArray(ret)){
                 return this.utils.map_(ret);
@@ -72,9 +73,7 @@
         return ret;
     }
 
-
-
-    exports.Dictionnary.prototype.utils = {
+    Dictionnary.prototype.utils = {
         assign_: function (obj) {
             var dup = {};
             for(var k in obj){
@@ -89,30 +88,30 @@
         }
     }
 
-    exports.Dictionnary.prototype.remove = function (key) {
+    Dictionnary.prototype.remove = function (key) {
         if(this._keys.indexOf(key) == -1) return false;
         var index = this._keys.indexOf(key);
         this._keys.splice(index,1);
         return this._values.splice(index,1);
     }
 
-    exports.Dictionnary.prototype.replace = function (key,value) {
+    Dictionnary.prototype.replace = function (key,value) {
         this._values[this._keys.indexOf(key)] = value;
     }
 
-    exports.Dictionnary.prototype.existsKey = function (key) {
+    Dictionnary.prototype.existsKey = function (key) {
         return this._keys.indexOf(key) != -1;
     }
 
-    exports.Dictionnary.prototype.existsValue = function (value) {
+    Dictionnary.prototype.existsValue = function (value) {
         return this._values.indexOf(value) != -1;
     }
 
-    exports.Dictionnary.prototype.getKey = function (value) {
+    Dictionnary.prototype.getKey = function (value) {
         return this._keys[this._values.indexOf(value)];
     }
 
-    exports.Dictionnary.prototype[Symbol.iterator] = function () {
+    Dictionnary.prototype[Symbol.iterator] = function () {
         var index = 0,
             data  = this._values;
 

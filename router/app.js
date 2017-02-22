@@ -1,25 +1,29 @@
-function display(content){
-    $('#main').html(content);
+function display(container,content){
+    container.innerHTML = content;
 }
 
 var blob = new Router(new Historik()),
     store = new Flux(),
-    template = new Chino();
+    templateEngine = new Chino();
 
-var main =
-        "<div><%if {{product}}%>" +
-        "<h3>{{name}}</h3>" +
-        "<h4>{{type}}</h4>" +
-        "<span>{{price}}</span>" +
-        "<%endif%>" +
-        "<%if {{!product}}%>" +
-        "<span>no product finded for current research</span>" +
-        "<%endif%>" +
-        "</div>"
-    ;
+templateEngine
+    .register(templates.accueil,"main")
+    .register(templates.menu,"menu")
+    .register(templates.category,"category")
+    .register(templates.product,"product");
 
-template
-    .register(main,"main");
+$('#menu').html(templateEngine.render("menu",{
+    items:[
+        {
+            title:'accueil',
+            link:'/'
+        },
+        {
+            title:'products',
+            link:'/products'
+        }
+    ]
+}));
 
 blob
     .use(function (now,old,next) {
@@ -27,35 +31,30 @@ blob
         console.log(arguments);
         next();
     })
-    .use('product/:id',function (now,old,next) {
-        console.log('middleware : product/:id');
-        console.log(arguments);
-        next();
-    })
-    .use('product/:action/:id',function (now,old,next) {
-        console.log('middleware : product/:action/:id');
-        console.log(arguments);
-        next();
-    })
     .on(function (now,old) {
-        console.log('route : /');
-        console.log(arguments);
         store.setState({location:now.url});
-        display(template.render("main",{}));
+        console.log('/');
+        $('#main').html(templateEngine.render("accueil",{}));
+        blob.parseTags();
     })
-    .on('product/:id', function (now,old) {
-        console.log('route : product/:id');
-        console.log(arguments);
+    .on('products', function (now,old) {
         store.setState({location:now.url});
-        $.post("http://localhost/router/a.php",now.params)
+        console.log('/products');
+        $.post("http://localhost/router/a.php",{category:'products'})
             .done(function (data) {
-                display(template.render("main",JSON.parse(data)));
-                store.setState(JSON.parse(data));
+                console.log(data);
+                $('#main').html(templateEngine.render("category",JSON.parse(data)));
+                blob.parseTags();
             });
     })
-    .on('product/:action/:id', function (now,old) {
-        console.log('route : product/:action/:id');
-        console.log(arguments);
+    .on('products/:id', function (now,old) {
+        console.log('/products/:id');
         store.setState({location:now.url});
+        $.post("http://localhost/router/a.php",{category:'products',id:now.params.id})
+            .done(function (data) {
+                console.log(data);
+                $('#main').html(templateEngine.render("product",JSON.parse(data)));
+                blob.parseTags();
+            });
     })
     .init();
